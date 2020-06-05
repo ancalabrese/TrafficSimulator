@@ -2,33 +2,37 @@
 
 #include <iostream>
 #include <random>
- 
+
 template <typename T>
-T MessageQueue<T>::receive()
-{
-    // FP.5a : The method receive should use std::unique_lock<std::mutex> and _condition.wait() 
-    // to wait for and receive new messages and pull them from the queue using move semantics. 
-    // The received object should then be returned by the receive function. 
+T MessageQueue<T>::receive() {
+    std::unique_lock<std::mutex> lck(_mutex);
+    _condition.wait(lck, [this] {
+        return !_queue.empty();
+    });
+    return std::move(_queue.back());
 }
 
 template <typename T>
-void MessageQueue<T>::send(T &&msg)
-{
-    // FP.4a : The method send should use the mechanisms std::lock_guard<std::mutex> 
-    // as well as _condition.notify_one() to add a new message to the queue and afterwards send a notification.
+void MessageQueue<T>::send(T &&msg) {
+    std::lock_guard<std::mutex> lck(_mutex);
+    _queue.push_back(std::move(msg));
+    _condition.notify_one();
 }
-
-
 
 TrafficLight::TrafficLight() {
     _type = ObjectType::objectTrafficLight;
-    _currentPhase = TrafficLightPhase::red;
+    std::default_random_engine generator(std::random_device{}());
+    std::uniform_int_distribution<int> distribution(0, 1);
+    std::srand(std::time(0));
+    int r = (int)distribution(generator);
+    _currentPhase = TrafficLightPhase(r);
 }
+TrafficLight::~TrafficLight() {}
 
 void TrafficLight::waitForGreen() {
-    // FP.5b : add the implementation of the method waitForGreen, in which an infinite while-loop
-    // runs and repeatedly calls the receive function on the message queue.
-    // Once it receives TrafficLightPhase::green, the method returns.
+    while (_phaseQueue.receive() != TrafficLightPhase::green) {
+        continue;
+    }
 }
 
 TrafficLightPhase TrafficLight::getCurrentPhase() {
@@ -41,10 +45,11 @@ std::chrono::milliseconds TrafficLight::getCurrentPhaseDuration(TrafficLightPhas
 
 void TrafficLight::toggleTrafficLightPhase() {
     _currentPhase = _currentPhase == TrafficLightPhase::red ? TrafficLightPhase::green : TrafficLightPhase::red;
+    //remove last state from message queue
 }
 
 void TrafficLight::simulate() {
-    threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases,this));
+    threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 }
 
 // virtual function which is executed in a thread
