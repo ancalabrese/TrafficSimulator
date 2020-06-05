@@ -24,8 +24,8 @@ TrafficLight::TrafficLight() {
     std::default_random_engine generator(std::random_device{}());
     std::uniform_int_distribution<int> distribution(0, 1);
     std::srand(std::time(0));
-    int r = (int)distribution(generator);
-    _currentPhase = TrafficLightPhase(r);
+    //Give random initial state to traffic light
+    _currentPhase = TrafficLightPhase((int)distribution(generator););
 }
 TrafficLight::~TrafficLight() {}
 
@@ -40,12 +40,12 @@ TrafficLightPhase TrafficLight::getCurrentPhase() {
 }
 
 std::chrono::milliseconds TrafficLight::getCurrentPhaseDuration(TrafficLightPhase &phase) {
+    //Red and green light duration is the same for every traffic light. 
     return phase == TrafficLightPhase::red ? std::chrono::milliseconds(4000) : std::chrono::milliseconds(6000);
 }
 
 void TrafficLight::toggleTrafficLightPhase() {
     _currentPhase = _currentPhase == TrafficLightPhase::red ? TrafficLightPhase::green : TrafficLightPhase::red;
-    //remove last state from message queue
 }
 
 void TrafficLight::simulate() {
