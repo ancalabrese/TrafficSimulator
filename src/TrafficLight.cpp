@@ -25,7 +25,7 @@ TrafficLight::TrafficLight() {
     std::uniform_int_distribution<int> distribution(0, 1);
     std::srand(std::time(0));
     //Give random initial state to traffic light
-    _currentPhase = TrafficLightPhase((int)distribution(generator););
+    _currentPhase = TrafficLightPhase((int)distribution(generator));
 }
 TrafficLight::~TrafficLight() {}
 
