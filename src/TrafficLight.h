@@ -21,7 +21,12 @@ enum TrafficLightPhase { red,
 template <class T>
 class MessageQueue {
    public:
+    T receive();
+    void send(T &&msg);
+
    private:
+   std::condition_variable _condition; 
+   std::mutex _mutex;
 };
 
 class TrafficLight : public TrafficObject {
@@ -31,21 +36,22 @@ class TrafficLight : public TrafficObject {
     ~TrafficLight();
 
     // getters / setters
+    TrafficLightPhase getCurrentPhase();
 
     // typical behaviour methods
     void waitForGreen();
-    TrafficLightPhase getCurrentPhase();
     void simulate();
 
    private:
     // typical behaviour methods
     void cycleThroughPhases();
+    void toggleTrafficLightPhase();
     std::chrono::milliseconds getCurrentPhaseDuration(TrafficLightPhase &phase);
 
     // FP.4b : create a private member of type MessageQueue for messages of type TrafficLightPhase
     // and use it within the infinite loop to push each new TrafficLightPhase into it by calling
     // send in conjunction with move semantics.
-
+    MessageQueue<TrafficLightPhase> _phaseQueue;
     std::condition_variable _condition;
     std::mutex _mutex;
     TrafficLightPhase _currentPhase;
